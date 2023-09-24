@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import * as Leaflet from 'leaflet';
 import { MapService } from '../../shared/map.service';
 import { Station } from '../../shared/model/station';
 import { environment } from 'src/environment/environment';
+import { PopupComponent } from '../popup/popup.component';
 
 @Component({
   selector: 'app-map',
@@ -10,7 +11,15 @@ import { environment } from 'src/environment/environment';
   styleUrls: ['./map.component.css']
 })
 export class MapComponent implements OnInit{
+  @ViewChild('map') mapElement!: any;
+  @ViewChild('popupComponent') popupComponent!: PopupComponent;
 
+  ubicacion = {
+    left: "0",
+    top: "0"
+  }
+  estacionSeleccionada!: Station;
+  mostrarVentana: boolean = false;
   public estaciones: Station[] = [];
   map!: Leaflet.Map;
   markers: Leaflet.Marker[] = [];
@@ -25,7 +34,7 @@ export class MapComponent implements OnInit{
     // center: { lat: 28.626137, lng: 79.821603 }
   }
 
-  constructor(private mapService: MapService){}
+  constructor(private mapService: MapService, private cdr: ChangeDetectorRef){}
 
   ngOnInit(): void {
     this.listarEstaciones();
@@ -72,11 +81,12 @@ export class MapComponent implements OnInit{
 
 
   initMarkers() {
+    console.log("initMarkers");
     for (let index = 0; index < this.estaciones.length; index++) {
       const data = this.estaciones[index];
       const marker = this.generateMarker(data, index);
 
-      marker.addTo(this.map).bindPopup(`<b>${data.latitude},  ${data.longitude}</b>`);
+      marker.addTo(this.map);
 
       this.map.panTo({lat: data.latitude, lng: data.longitude});
       this.markers.push(marker)
@@ -93,19 +103,48 @@ export class MapComponent implements OnInit{
   onMapReady($event: Leaflet.Map) {
     this.map = $event;
     this.mapListo = true;
-    // this.ajustarMapaConMarcadores();
   }
 
-  mapClicked($event: any) {
-    console.log($event.latlng.lat, $event.latlng.lng);
-  }
+  // mapClicked($event: any) {
+  //   console.log($event.latlng.lat, $event.latlng.lng);
+  // }
 
   markerClicked($event: any, index: number) {
     console.log("index: " + index);
     console.log($event.latlng.lat, $event.latlng.lng);
+
+
+    this.estacionSeleccionada = this.estaciones[index];
+    console.log(this.estacionSeleccionada);
+
+    // this.ajustarUbicacionVentana($event.containerPoint.x, $event.containerPoint.y);
+    this.abrirVentanaInformativa();
+    this.cdr.detectChanges(); // Forzar la detección de cambios
+
+    // popup!.style.left = $event.containerPoint.x + 'px';
+    // popup!.style.top = $event.containerPoint.y + 'px';
+
+  }
+
+  ajustarUbicacionVentana(x: number, y: number){
+    this.ubicacion.left = x + "px";
+    this.ubicacion.top = y + "px";
+    console.log(this.ubicacion);
   }
 
   markerDragEnd($event: any, index: number) {
     console.log($event.target.getLatLng());
   }
+
+  abrirVentanaInformativa(){
+    this.mostrarVentana = true;
+    console.log(this.mostrarVentana);
+  }
+
+  cerrarVentanaInformativa(){
+    this.mostrarVentana = false;
+    this.cdr.detectChanges(); // Forzar la detección de cambios
+  }
+
+
 }

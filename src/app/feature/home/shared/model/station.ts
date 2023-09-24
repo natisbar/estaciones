@@ -3,6 +3,6 @@ export interface Station{
   longitude: number;
   temperature: number;
   ubication: string;
-  client_name: string;
+  client: string;
   id: string;
 }
