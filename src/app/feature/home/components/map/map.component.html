@@ -9,8 +9,7 @@
             [data]="estacionSeleccionada">
   </app-popup> -->
 
-  <!-- [style.left]="ubicacion.left"
-        [style.top]="ubicacion.top" -->
+
 
   <div class="agregar" (click)="mostrarAgregarEnModal()">
     <i class="fa fa-plus-circle" aria-hidden="true"></i>
@@ -45,7 +44,7 @@
     </div>
   </div>
 
-  <div class="modal inferior-izquierda" *ngIf="mostrarVentana">
+  <div id="modalInformacion" class="modal inferior-izquierda" *ngIf="mostrarVentana" >
     <i class="fa fa-times-circle close" aria-hidden="true" (click)="cerrarVentanaInformativa()"></i>
     <div class="informacion" *ngIf="!mostrarFormulario">
       <p class="title">{{ estacionSeleccionada.ubication }}</p>
@@ -108,7 +107,5 @@
   </div>
 
 </div>
-
-<!-- (leafletClick)="mapClicked($event)" -->
 
 

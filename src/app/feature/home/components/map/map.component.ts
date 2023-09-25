@@ -73,6 +73,12 @@ export class MapComponent implements OnInit{
     this.formAgregar = this.construirFormulario();
   }
 
+  private validarMovimientoMapa(){
+    this.map.on('move', (event) => {
+      this.cerrarVentanaInformativa();
+    });
+  }
+
   private construirFormulario(){
     return new FormGroup({
       nombre: new FormControl("", [Validators.required, regularCharacterValidator()]),
@@ -172,8 +178,8 @@ export class MapComponent implements OnInit{
 
   private hacerClicEnMarcador($event: any, marker: Leaflet.Marker, index: number) {
     this.cambiarIconoMarcadorSeleccionado(marker, index);
-    // this.ajustarUbicacionVentana($event.containerPoint.x, $event.containerPoint.y);
     this.abrirVentanaInformativa();
+    this.ajustarUbicacionVentana($event.containerPoint.x, $event.containerPoint.y);
   }
 
   private cambiarIconoMarcadorSeleccionado(marker: Leaflet.Marker, index: number){
@@ -188,8 +194,32 @@ export class MapComponent implements OnInit{
   }
 
   private ajustarUbicacionVentana(x: number, y: number){
+    const customPopup = document.querySelector('#modalInformacion') as HTMLElement;
+    const popupWidth = customPopup.offsetWidth;
+    const popupHeight = customPopup.offsetHeight;
+
+    const marginX = 10;
+    const marginY = 30;
+
+    const left = x - popupWidth / 2;
+    const top = y - popupHeight - marginY;
+
     this.ubicacion.left = x + "px";
     this.ubicacion.top = y + "px";
+
+    if (left < 0) {
+      customPopup.style.left = marginX + 'px';
+    } else if (left + popupWidth > this.map.getSize().x) {
+      customPopup.style.left = (this.map.getSize().x - popupWidth - marginX) + 'px';
+    } else {
+      customPopup.style.left = left + 'px';
+    }
+
+    if (top < 0) {
+      customPopup.style.top = marginY + 'px';
+    } else {
+      customPopup.style.top = top + 'px';
+    }
   }
 
   private llenarFormulario(data: Station){
@@ -237,6 +267,7 @@ export class MapComponent implements OnInit{
   public onMapReady($event: Leaflet.Map) {
     this.map = $event;
     this.mapListo = true;
+    this.validarMovimientoMapa();
   }
 
   public listarEstaciones(conInicioDeMarcadores: boolean){
