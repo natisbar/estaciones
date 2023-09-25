@@ -12,12 +12,12 @@
   <!-- [style.left]="ubicacion.left"
         [style.top]="ubicacion.top" -->
 
-  <div class="agregar">
+  <div class="agregar" (click)="mostrarAgregarEnModal()">
     <i class="fa fa-plus-circle" aria-hidden="true"></i>
     <span>Agregar estación</span>
   </div>
 
-  <div *ngIf="mostrarAgregar">
+  <div class="modal superior-derecha"  *ngIf="mostrarAgregar">
     <div class="formulario">
       <form id="form-actualizar" [formGroup]="formAgregar" #myForm="ngForm">
         <div class="entrada">
@@ -45,7 +45,7 @@
     </div>
   </div>
 
-  <div class="modal" *ngIf="mostrarVentana">
+  <div class="modal inferior-izquierda" *ngIf="mostrarVentana">
     <i class="fa fa-times-circle close" aria-hidden="true" (click)="cerrarVentanaInformativa()"></i>
     <div class="informacion" *ngIf="!mostrarFormulario">
       <p class="title">{{ estacionSeleccionada.ubication }}</p>
@@ -76,7 +76,7 @@
       </div>
     </div>
 
-    <div class="formulario" *ngIf="mostrarFormulario">
+    <div *ngIf="mostrarFormulario">
       <form id="form-actualizar" [formGroup]="formActualizar" #myForm="ngForm">
         <div class="icon-delete">
           <i class="fa fa-trash " aria-hidden="true" (click)="eliminarEstacion()"></i>

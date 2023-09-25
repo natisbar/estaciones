@@ -50,11 +50,12 @@ export class MapComponent implements OnInit{
 
   ngOnInit(): void {
     this.listarEstaciones();
-    this.construirFormulario();
+    this.formActualizar = this.construirFormulario();
+    this.formAgregar = this.construirFormulario();
   }
 
   private construirFormulario(){
-    this.formActualizar = new FormGroup({
+    return new FormGroup({
       nombre: new FormControl("", Validators.required),
       temp: new FormControl("", [Validators.required]),
       latitud: new FormControl("", [Validators.required]),
@@ -188,7 +189,22 @@ export class MapComponent implements OnInit{
   }
 
   public crearEstacion(){
-
+    console.log(this.formAgregar.valid);
+    if (this.formAgregar.valid){
+      let body = this.mapearFormulario(this.formAgregar);
+      console.log(body);
+      this.mapService.guardarEstacion(environment.endpoint, body).subscribe({
+        next: (data) =>{
+          this.reloadPage();
+        },
+        error: (error) => {
+          console.log('Ocurrió un error al actualizar la estación:', error);
+        }
+      });
+    }
+    else{
+      window.alert("Ningún campo debe estar vacio.");
+    }
   }
 
   private mapearFormulario(formulario: FormGroup){

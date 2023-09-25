@@ -11,8 +11,8 @@
   position: absolute;
   z-index: 9999;
   background-color: white;
-  top: 0.5rem;
-  right: 0.5rem;
+  top: 1rem;
+  right: 1rem;
   color: #4b6eae;
   display: flex;
   flex-direction: column;
@@ -38,8 +38,6 @@
 
 .modal {
   position: absolute;
-  bottom: 0.5rem;
-  left: 0.5rem;
   z-index: 9999;
   background-color: white;
   padding: 0.3rem 1rem 1rem 1rem;
@@ -48,6 +46,20 @@
   flex-direction: column;
   min-width: 140px;
   max-width: 165px;
+}
+
+.inferior-izquierda {
+  bottom: 0.5rem;
+  left: 0.5rem;
+}
+
+.superior-derecha {
+  top: 4rem;
+  right: 1rem;
+}
+
+.formulario{
+ padding-top: 0.5rem;
 }
 
 .close{
