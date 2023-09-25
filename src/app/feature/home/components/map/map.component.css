@@ -4,6 +4,36 @@
 
 .contenedor {
   position: relative;
+  font-size: 12px;
+}
+
+.agregar {
+  position: absolute;
+  z-index: 9999;
+  background-color: white;
+  top: 0.5rem;
+  right: 0.5rem;
+  color: #4b6eae;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 40px;
+  padding: 0.2rem 0;
+  border-radius: 20px;
+  border: solid 2px #4b6eae;
+}
+
+.agregar:hover {
+  color: black;
+  border: solid 2px black;
+  cursor: pointer;
+}
+
+.agregar span{
+  font-size: 8px;
+  text-align: center;
+  color: black;
 }
 
 .modal {
@@ -14,10 +44,10 @@
   background-color: white;
   padding: 0.3rem 1rem 1rem 1rem;
   border-radius: 10px;
-  font-size: 12px;
   display: flex;
   flex-direction: column;
   min-width: 140px;
+  max-width: 165px;
 }
 
 .close{
@@ -78,14 +108,85 @@ hr {
   font-size: 9px;
   border-radius: 10px;
   border: none;
-  padding: 0.2rem 0.2rem;
-  color: white;
-  background-color: #0c103bf1;
-}
-
-.pie button:hover{
+  padding: 0.2rem 0.4rem;
   color: white;
   background-color: #333976f1;
+}
+
+.pie button:hover, .botones-form input:hover{
+  color: white;
+  background-color: #0c103bf1;
   cursor: pointer;
 }
+
+#form-actualizar{
+  display: flex;
+  flex-direction: column;
+}
+
+.icon-delete{
+  display: flex;
+  justify-content: right;
+  padding: 0.2rem
+}
+
+.icon-delete i{
+  color: red;
+}
+
+.icon-delete i:hover{
+  color: black;
+  cursor: pointer;
+}
+
+.entrada{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-bottom: 0.3rem;
+}
+
+.entrada label{
+  padding-left: 0.3rem;
+  padding-bottom: 0.3rem;
+}
+
+.entrada input{
+  border-radius: 10px;
+  border: solid 1px gray;
+  font-size: 10px;
+  padding: 0.2rem 0.4rem;
+  color: #333976f1;
+}
+
+.botones-form{
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.7rem;
+}
+
+.botones-form input{
+  font-size: 10px;
+  border-radius: 10px;
+  border: none;
+  padding: 0.3rem 0.5rem;
+  color: white;
+  background-color: #333976f1;
+  min-width: 55px;
+}
+
+.botones-form button{
+  font-size: 10px;
+  border-radius: 10px;
+  border: solid 1px #333976f1;
+  padding: 0.3rem 0.5rem;
+  color: #333976f1;
+  background-color: white;
+  min-width: 55px;
+}
+
+.botones-form button:hover{
+  background-color: #e0dcdcf1;
+}
+
 

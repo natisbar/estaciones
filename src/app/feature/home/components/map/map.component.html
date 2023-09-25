@@ -12,9 +12,42 @@
   <!-- [style.left]="ubicacion.left"
         [style.top]="ubicacion.top" -->
 
+  <div class="agregar">
+    <i class="fa fa-plus-circle" aria-hidden="true"></i>
+    <span>Agregar estación</span>
+  </div>
+
+  <div *ngIf="mostrarAgregar">
+    <div class="formulario">
+      <form id="form-actualizar" [formGroup]="formAgregar" #myForm="ngForm">
+        <div class="entrada">
+          <label for="nombre">Nombre</label>
+          <input type="text" name="nombre" id="nombre"formControlName="nombre">
+        </div>
+        <div class="entrada">
+          <label for="temp">Temperatura</label>
+          <input type="text" name="temp" id="temp" formControlName="temp">
+        </div>
+        <div class="entrada">
+          <label for="latitud">Latitud</label>
+          <input type="text" name="latitud" id="latitud" formControlName="latitud">
+        </div>
+        <div class="entrada">
+          <label for="longitud">Longitud</label>
+          <input type="text" name="longitud" id="longitud" formControlName="longitud">
+        </div>
+        <div class="botones-form">
+          <input type="submit" (click)="crearEstacion()" value="Guardar">
+          <button (click)="ocultarAgregarEnModal()">Cancelar</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
   <div class="modal" *ngIf="mostrarVentana">
     <i class="fa fa-times-circle close" aria-hidden="true" (click)="cerrarVentanaInformativa()"></i>
-    <div class="informacion">
+    <div class="informacion" *ngIf="!mostrarFormulario">
       <p class="title">{{ estacionSeleccionada.ubication }}</p>
       <div class="col" style="padding-bottom: 0.5rem;">
         <div class="subtitle">
@@ -39,17 +72,40 @@
         </div>
       </div>
       <div class="pie">
-        <button>Editar información</button>
+        <button (click)="iniciarActualizacion()">Editar información</button>
       </div>
     </div>
 
-    <div class="formulario">
+    <div class="formulario" *ngIf="mostrarFormulario">
+      <form id="form-actualizar" [formGroup]="formActualizar" #myForm="ngForm">
+        <div class="icon-delete">
+          <i class="fa fa-trash " aria-hidden="true" (click)="eliminarEstacion()"></i>
+        </div>
+        <div class="entrada">
+          <label for="nombre">Nombre</label>
+          <input type="text" name="nombre" id="nombre"formControlName="nombre">
+        </div>
+        <div class="entrada">
+          <label for="temp">Temperatura</label>
+          <input type="text" name="temp" id="temp" formControlName="temp">
+        </div>
+        <div class="entrada">
+          <label for="latitud">Latitud</label>
+          <input type="text" name="latitud" id="latitud" formControlName="latitud">
+        </div>
+        <div class="entrada">
+          <label for="longitud">Longitud</label>
+          <input type="text" name="longitud" id="longitud" formControlName="longitud">
+        </div>
+        <div class="botones-form">
+          <input type="submit" (click)="actualizarEstacion()" value="Guardar">
+          <button (click)="ocultarFormularioEnModal()">Cancelar</button>
+        </div>
+      </form>
 
     </div>
 
   </div>
-
-
 
 </div>
 

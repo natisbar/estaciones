@@ -4,6 +4,14 @@ import { MapService } from '../../shared/map.service';
 import { Station } from '../../shared/model/station';
 import { environment } from 'src/environment/environment';
 import { PopupComponent } from '../popup/popup.component';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { DtoStation } from '../../shared/model/dtoStation';
+
+const GRADO_MENOR: number = 15;
+const GRADO_MAYOR: number = 25;
+const MARCADOR_AZUL: string = 'assets/image/marker_blue.png';
+const MARCADOR_ROJO: string = 'assets/image/marker_red.png';
+const MARCADOR_VERDE: string = 'assets/image/marker_green.png';
 
 @Component({
   selector: 'app-map',
@@ -18,8 +26,12 @@ export class MapComponent implements OnInit{
     left: "0",
     top: "0"
   }
+  public formActualizar!: FormGroup;
+  public formAgregar!: FormGroup;
   estacionSeleccionada!: Station;
   mostrarVentana: boolean = false;
+  mostrarFormulario: boolean = false;
+  mostrarAgregar: boolean = false;
   public estaciones: Station[] = [];
   map!: Leaflet.Map;
   markers: Leaflet.Marker[] = [];
@@ -38,17 +50,95 @@ export class MapComponent implements OnInit{
 
   ngOnInit(): void {
     this.listarEstaciones();
-    this.definirIconos();
+    this.construirFormulario();
   }
 
-  private definirIconos(){
-    Leaflet.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'assets/marker-icon-2x.png',
-      iconUrl: 'assets/marker-icon.png',
-      shadowUrl: 'assets/marker-shadow.png'
+  private construirFormulario(){
+    this.formActualizar = new FormGroup({
+      nombre: new FormControl("", Validators.required),
+      temp: new FormControl("", [Validators.required]),
+      latitud: new FormControl("", [Validators.required]),
+      longitud: new FormControl("", [Validators.required]),
     });
   }
 
+  private definirIcono(grados: number): Leaflet.Icon{
+    let iconUrl = "";
+    if (grados < GRADO_MENOR){
+      iconUrl = MARCADOR_AZUL;
+    }
+    else if (grados > GRADO_MAYOR){
+      iconUrl = MARCADOR_ROJO;
+    }
+    else {
+      iconUrl = MARCADOR_VERDE;
+    }
+
+    return new Leaflet.Icon({
+      iconUrl: iconUrl,
+      iconSize: [25, 25]
+    });
+  }
+
+  private initMarkers() {
+    for (let index = 0; index < this.estaciones.length; index++) {
+      const data = this.estaciones[index];
+      const marker = this.generateMarker(data, index);
+
+      marker.addTo(this.map);
+
+      this.map.panTo({lat: data.latitude, lng: data.longitude});
+      this.markers.push(marker)
+    }
+    this.ajustarMapaConMarcadores();
+  }
+
+  private generateMarker(data: any, index: number) {
+    return Leaflet.marker({lat: data.latitude, lng: data.longitude}, { icon: this.definirIcono(data.temperature) })
+      .on('click', (event) => this.markerClicked(event, index));
+  }
+
+  private ajustarMapaConMarcadores() {
+    if (this.markers.length === 0) {
+      this.map.setView([28.626137, 79.821603], 11);
+      return;
+    }
+    const latLngs = this.markers.map(marker => marker.getLatLng());
+    const bounds = Leaflet.latLngBounds(latLngs);
+    // fitBounds para ajustar el mapa a los límites de los marcadores
+    this.map.fitBounds(bounds);
+  }
+
+  private markerClicked($event: any, index: number) {
+    this.estacionSeleccionada = this.estaciones[index];
+    console.log(this.estacionSeleccionada);
+    // this.ajustarUbicacionVentana($event.containerPoint.x, $event.containerPoint.y);
+    this.abrirVentanaInformativa();
+    this.ocultarFormularioEnModal();
+  }
+
+  private ajustarUbicacionVentana(x: number, y: number){
+    this.ubicacion.left = x + "px";
+    this.ubicacion.top = y + "px";
+  }
+
+  private llenarFormulario(data: Station){
+    this.formActualizar.setValue({
+      nombre: data.ubication,
+      temp: data.temperature,
+      latitud: data.latitude,
+      longitud: data.longitude
+    });
+  }
+
+  private forzarDeteccionCambios(){
+    this.cdr.detectChanges();
+  }
+
+  public onMapReady($event: Leaflet.Map) {
+    this.map = $event;
+    this.mapListo = true;
+  }
 
   public listarEstaciones(){
      this.mapService.obtenerEstaciones(environment.endpoint).subscribe({
@@ -65,86 +155,88 @@ export class MapComponent implements OnInit{
      });
   }
 
-  ajustarMapaConMarcadores() {
-    if (this.markers.length === 0) {
-      // No hay marcadores para ajustar, puedes establecer el centro manualmente si es necesario
-      this.map.setView([28.626137, 79.821603], 11);
-      return;
+  public eliminarEstacion(){
+    const result = window.confirm('¿Estás seguro de eliminar esta estación?');
+    if(result){
+      this.mapService.eliminarEstacion(environment.endpoint, this.estacionSeleccionada.id).subscribe({
+        next: (data) =>{
+          this.reloadPage();
+        },
+        error: (error) => {
+          console.log('Ocurrió un error al borrar la estación:', error);
+        }
+       });
     }
-
-    const latLngs = this.markers.map(marker => marker.getLatLng());
-    const bounds = Leaflet.latLngBounds(latLngs);
-
-    // Utiliza fitBounds para ajustar el mapa a los límites de los marcadores
-    this.map.fitBounds(bounds);
   }
 
-
-  initMarkers() {
-    console.log("initMarkers");
-    for (let index = 0; index < this.estaciones.length; index++) {
-      const data = this.estaciones[index];
-      const marker = this.generateMarker(data, index);
-
-      marker.addTo(this.map);
-
-      this.map.panTo({lat: data.latitude, lng: data.longitude});
-      this.markers.push(marker)
+  public actualizarEstacion(){
+    if (this.formActualizar.valid){
+      let body = this.mapearFormulario(this.formActualizar);
+      console.log(body);
+      this.mapService.actualizarEstacion(environment.endpoint, this.estacionSeleccionada.id, body).subscribe({
+        next: (data) =>{
+          this.reloadPage();
+        },
+        error: (error) => {
+          console.log('Ocurrió un error al actualizar la estación:', error);
+        }
+      });
     }
-    this.ajustarMapaConMarcadores();
+    else{
+      window.alert("Ningún campo debe estar vacio.");
+    }
   }
 
-  generateMarker(data: any, index: number) {
-    return Leaflet.marker({lat: data.latitude, lng: data.longitude}, { draggable: data.draggable })
-      .on('click', (event) => this.markerClicked(event, index))
-      .on('dragend', (event) => this.markerDragEnd(event, index));
+  public crearEstacion(){
+
   }
 
-  onMapReady($event: Leaflet.Map) {
-    this.map = $event;
-    this.mapListo = true;
+  private mapearFormulario(formulario: FormGroup){
+    return new DtoStation(formulario.get('latitud')?.value,
+                          formulario.get('longitud')?.value,
+                          formulario.get('temp')?.value,
+                          formulario.get('nombre')?.value);
   }
 
+  public iniciarActualizacion(){
+    this.mostrarFormularioEnModal();
+    this.llenarFormulario(this.estacionSeleccionada);
+    this.forzarDeteccionCambios();
+  }
+
+  public abrirVentanaInformativa(){
+    this.mostrarVentana = true;
+    this.forzarDeteccionCambios();
+  }
+
+  public cerrarVentanaInformativa(){
+    this.mostrarVentana = false;
+    this.forzarDeteccionCambios();
+  }
+
+  public mostrarFormularioEnModal(){
+    this.mostrarFormulario = true;
+  }
+
+  public ocultarFormularioEnModal(){
+    this.mostrarFormulario = false;
+    this.forzarDeteccionCambios();
+  }
+
+  public mostrarAgregarEnModal(){
+    this.mostrarAgregar = true;
+  }
+
+  public ocultarAgregarEnModal(){
+    this.mostrarAgregar = false;
+    this.forzarDeteccionCambios();
+  }
+
+  public reloadPage() {
+    location.reload();
+  }
   // mapClicked($event: any) {
   //   console.log($event.latlng.lat, $event.latlng.lng);
   // }
-
-  markerClicked($event: any, index: number) {
-    console.log("index: " + index);
-    console.log($event.latlng.lat, $event.latlng.lng);
-
-
-    this.estacionSeleccionada = this.estaciones[index];
-    console.log(this.estacionSeleccionada);
-
-    // this.ajustarUbicacionVentana($event.containerPoint.x, $event.containerPoint.y);
-    this.abrirVentanaInformativa();
-    this.cdr.detectChanges(); // Forzar la detección de cambios
-
-    // popup!.style.left = $event.containerPoint.x + 'px';
-    // popup!.style.top = $event.containerPoint.y + 'px';
-
-  }
-
-  ajustarUbicacionVentana(x: number, y: number){
-    this.ubicacion.left = x + "px";
-    this.ubicacion.top = y + "px";
-    console.log(this.ubicacion);
-  }
-
-  markerDragEnd($event: any, index: number) {
-    console.log($event.target.getLatLng());
-  }
-
-  abrirVentanaInformativa(){
-    this.mostrarVentana = true;
-    console.log(this.mostrarVentana);
-  }
-
-  cerrarVentanaInformativa(){
-    this.mostrarVentana = false;
-    this.cdr.detectChanges(); // Forzar la detección de cambios
-  }
-
 
 }

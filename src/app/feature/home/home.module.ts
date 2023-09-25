@@ -6,6 +6,7 @@ import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { MapService } from "./shared/map.service";
 import { PopupComponent } from './components/popup/popup.component';
 import { CommonModule } from "@angular/common";
+import { ReactiveFormsModule } from "@angular/forms";
 
 @NgModule({
   declarations: [
@@ -15,10 +16,12 @@ import { CommonModule } from "@angular/common";
   imports: [
     HomeRoutingModule,
     LeafletModule,
-    CommonModule
+    CommonModule,
+    ReactiveFormsModule
   ],
   exports: [
-    CommonModule
+    CommonModule,
+    ReactiveFormsModule
   ],
   providers: [
     MapService

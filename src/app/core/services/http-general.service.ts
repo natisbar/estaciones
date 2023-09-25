@@ -16,6 +16,14 @@ export class HttpGeneralService {
     return this.http.get<T>(url)
   }
 
+  public doDelete(url: string){
+    return this.http.delete(url);
+  }
+
+  public doUpdate(url: string, body: any, options?: any){
+    return this.http.put(url, body, options);
+  }
+
   getHttpHeaders(): HttpHeaders {
     let headers = new HttpHeaders().set('access-control-allow-origin',"*");
     // let headers = new HttpHeaders();
