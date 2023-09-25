@@ -3,10 +3,10 @@ import * as Leaflet from 'leaflet';
 import { MapService } from '../../shared/map.service';
 import { Station } from '../../shared/model/station';
 import { environment } from 'src/environment/environment';
-import { PopupComponent } from '../popup/popup.component';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { DtoStation } from '../../shared/model/dtoStation';
-import { HttpEvent, HttpResponse } from '@angular/common/http';
+import { ModalNotificaciones } from 'src/app/core/services/modal.service';
+import { SweetAlertIcon } from 'sweetalert2';
 
 const GRADO_MENOR: number = 15;
 const GRADO_MAYOR: number = 25;
@@ -16,6 +16,11 @@ const MARCADOR_VERDE: string = 'assets/image/marker_green.png';
 const MARCADOR_AZUL_SELECTED: string = 'assets/image/marker_blue_selected.png';
 const MARCADOR_ROJO_SELECTED: string = 'assets/image/marker_red_selected.png';
 const MARCADOR_VERDE_SELECTED: string = 'assets/image/marker_green_selected.png';
+const SATISFACTORIO_ICON: SweetAlertIcon = 'success';
+const ERROR_ICON: SweetAlertIcon = 'error';
+const INFORMACION_INCOMPLETA: string = 'Por favor diligencie todos los campos.';
+const SOLICITUD_EXITOSA: string = 'Tu solicitud ha sido realizada exitosamente.';
+const SOLICITUD_ERROR: string = 'Se ha presentado inconvenientes con la solicitud. Intentalo nuevamente.';
 
 @Component({
   selector: 'app-map',
@@ -23,8 +28,6 @@ const MARCADOR_VERDE_SELECTED: string = 'assets/image/marker_green_selected.png'
   styleUrls: ['./map.component.css']
 })
 export class MapComponent implements OnInit{
-  @ViewChild('map') mapElement!: any;
-  @ViewChild('popupComponent') popupComponent!: PopupComponent;
 
   ubicacion = {
     left: "0",
@@ -50,10 +53,11 @@ export class MapComponent implements OnInit{
       })
     ],
     zoom: 16,
-    // center: { lat: 28.626137, lng: 79.821603 }
   }
 
-  constructor(private mapService: MapService, private cdr: ChangeDetectorRef){}
+  constructor(private mapService: MapService,
+              private cdr: ChangeDetectorRef,
+              private modalNotificaciones: ModalNotificaciones){}
 
   ngOnInit(): void {
     this.listarEstaciones();
@@ -165,13 +169,15 @@ export class MapComponent implements OnInit{
     });
   }
 
-  private forzarDeteccionCambios(){
-    this.cdr.detectChanges();
+  private mapearFormulario(formulario: FormGroup){
+    return new DtoStation(formulario.get('latitud')?.value,
+                          formulario.get('longitud')?.value,
+                          formulario.get('temp')?.value,
+                          formulario.get('nombre')?.value);
   }
 
-  public onMapReady($event: Leaflet.Map) {
-    this.map = $event;
-    this.mapListo = true;
+  private forzarDeteccionCambios(){
+    this.cdr.detectChanges();
   }
 
   private actualizarEnMapa(datosActualizados: DtoStation){
@@ -201,6 +207,11 @@ export class MapComponent implements OnInit{
     this.formAgregar.reset();
   }
 
+  public onMapReady($event: Leaflet.Map) {
+    this.map = $event;
+    this.mapListo = true;
+  }
+
   public listarEstaciones(){
      this.mapService.obtenerEstaciones(environment.endpoint).subscribe({
       next: (data: Station[]) =>{
@@ -210,7 +221,8 @@ export class MapComponent implements OnInit{
         }
       },
       error: (error) => {
-        console.log('Ocurrió un error al obtener las estaciones:', error);
+        this.modalNotificaciones.modalBasico(ERROR_ICON, SOLICITUD_ERROR);
+        console.log(error);
       }
      });
   }
@@ -223,9 +235,11 @@ export class MapComponent implements OnInit{
           this.eliminarEnMapa();
           this.ocultarFormularioEnModal();
           this.cerrarVentanaInformativa();
+          this.modalNotificaciones.modalBasico(SATISFACTORIO_ICON, SOLICITUD_EXITOSA);
         },
         error: (error) => {
-          console.log('Ocurrió un error al borrar la estación:', error);
+          this.modalNotificaciones.modalBasico(ERROR_ICON, SOLICITUD_ERROR);
+          console.log(error);
         }
        });
     }
@@ -242,12 +256,13 @@ export class MapComponent implements OnInit{
           this.ajustarMapaConMarcadores();
         },
         error: (error) => {
-          console.log('Ocurrió un error al actualizar la estación:', error);
+          this.modalNotificaciones.modalBasico(ERROR_ICON, SOLICITUD_ERROR);
+          console.log(error);
         }
       });
     }
     else{
-      window.alert("Ningún campo debe estar vacio.");
+      this.modalNotificaciones.modalBasico(ERROR_ICON, INFORMACION_INCOMPLETA);
     }
   }
 
@@ -259,22 +274,17 @@ export class MapComponent implements OnInit{
       this.mapService.guardarEstacion(environment.endpoint, body).subscribe({
         next: (response) =>{
           this.crearEnMapa(body);
+          this.modalNotificaciones.modalBasico(SATISFACTORIO_ICON, SOLICITUD_EXITOSA);
         },
         error: (error) => {
-          console.log('Ocurrió un error al actualizar la estación:', error);
+          this.modalNotificaciones.modalBasico(ERROR_ICON, SOLICITUD_ERROR);
+          console.log(error);
         }
       });
     }
     else{
-      window.alert("Ningún campo debe estar vacio.");
+      this.modalNotificaciones.modalBasico(ERROR_ICON, INFORMACION_INCOMPLETA);
     }
-  }
-
-  private mapearFormulario(formulario: FormGroup){
-    return new DtoStation(formulario.get('latitud')?.value,
-                          formulario.get('longitud')?.value,
-                          formulario.get('temp')?.value,
-                          formulario.get('nombre')?.value);
   }
 
   public iniciarActualizacion(){

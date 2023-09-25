@@ -1,6 +1,7 @@
 import { CommonModule} from "@angular/common";
 import { NgModule } from "@angular/core";
 import { HttpGeneralService } from "./services/http-general.service";
+import { ModalNotificaciones } from "./services/modal.service";
 
 
 @NgModule({
@@ -13,7 +14,8 @@ import { HttpGeneralService } from "./services/http-general.service";
     CommonModule
   ],
   providers: [
-    HttpGeneralService
+    HttpGeneralService,
+    ModalNotificaciones
   ]
 })
 export class CoreModule {}
