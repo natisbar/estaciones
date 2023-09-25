@@ -110,6 +110,13 @@ export class MapComponent implements OnInit{
   }
 
   private iniciarMarcadores() {
+    if (this.markers.length > 0){
+      this.markers.forEach(marker => {
+        this.map.removeLayer(marker);
+      });
+      this.markers = [];
+    }
+
     for (let index = 0; index < this.estaciones.length; index++) {
       const data = this.estaciones[index];
       const marker = this.generarMarcador(data, index, false);
@@ -198,7 +205,7 @@ export class MapComponent implements OnInit{
     this.map.removeLayer(this.marcadorSeleccionado!);
     this.markers.splice(this.idMarcadorSeleccionado, 1);
     this.ajustarMapaConMarcadores();
-    this.listarEstaciones(false);
+    this.listarEstaciones(true);
   }
 
   private crearEnMapa(datosEstacion: DtoStation){
