@@ -12,6 +12,9 @@ const GRADO_MAYOR: number = 25;
 const MARCADOR_AZUL: string = 'assets/image/marker_blue.png';
 const MARCADOR_ROJO: string = 'assets/image/marker_red.png';
 const MARCADOR_VERDE: string = 'assets/image/marker_green.png';
+const MARCADOR_AZUL_SELECTED: string = 'assets/image/marker_blue_selected.png';
+const MARCADOR_ROJO_SELECTED: string = 'assets/image/marker_red_selected.png';
+const MARCADOR_VERDE_SELECTED: string = 'assets/image/marker_green_selected.png';
 
 @Component({
   selector: 'app-map',
@@ -28,6 +31,8 @@ export class MapComponent implements OnInit{
   }
   public formActualizar!: FormGroup;
   public formAgregar!: FormGroup;
+  private marcadorSeleccionado: Leaflet.Marker | null = null;
+  private tempMarcadorSeleccionado!: number;
   estacionSeleccionada!: Station;
   mostrarVentana: boolean = false;
   mostrarFormulario: boolean = false;
@@ -63,28 +68,44 @@ export class MapComponent implements OnInit{
     });
   }
 
-  private definirIcono(grados: number): Leaflet.Icon{
+  private definirIcono(grados: number, selected: boolean): Leaflet.Icon{
     let iconUrl = "";
-    if (grados < GRADO_MENOR){
-      iconUrl = MARCADOR_AZUL;
-    }
-    else if (grados > GRADO_MAYOR){
-      iconUrl = MARCADOR_ROJO;
+    let iconSize = [0, 0];
+    if (!selected){
+      if (grados < GRADO_MENOR){
+        iconUrl = MARCADOR_AZUL;
+      }
+      else if (grados > GRADO_MAYOR){
+        iconUrl = MARCADOR_ROJO;
+      }
+      else {
+        iconUrl = MARCADOR_VERDE;
+      }
+      iconSize = [25, 25];
     }
     else {
-      iconUrl = MARCADOR_VERDE;
+      if (grados < GRADO_MENOR){
+        iconUrl = MARCADOR_AZUL_SELECTED;
+      }
+      else if (grados > GRADO_MAYOR){
+        iconUrl = MARCADOR_ROJO_SELECTED;
+      }
+      else {
+        iconUrl = MARCADOR_VERDE_SELECTED;
+      }
+      iconSize = [60, 60];
     }
-
+    console.log(iconUrl)
     return new Leaflet.Icon({
       iconUrl: iconUrl,
-      iconSize: [25, 25]
+      iconSize: [iconSize[0], iconSize[1]]
     });
   }
 
-  private initMarkers() {
+  private iniciarMarcadores() {
     for (let index = 0; index < this.estaciones.length; index++) {
       const data = this.estaciones[index];
-      const marker = this.generateMarker(data, index);
+      const marker = this.generarMarcador(data, index);
 
       marker.addTo(this.map);
 
@@ -94,9 +115,10 @@ export class MapComponent implements OnInit{
     this.ajustarMapaConMarcadores();
   }
 
-  private generateMarker(data: any, index: number) {
-    return Leaflet.marker({lat: data.latitude, lng: data.longitude}, { icon: this.definirIcono(data.temperature) })
-      .on('click', (event) => this.markerClicked(event, index));
+  private generarMarcador(data: any, index: number) {
+    const marker = Leaflet.marker({lat: data.latitude, lng: data.longitude}, { icon: this.definirIcono(data.temperature, false) });
+    marker.on('click', (event) => this.hacerClicEnMarcador(event, marker, index));
+    return marker;
   }
 
   private ajustarMapaConMarcadores() {
@@ -110,9 +132,22 @@ export class MapComponent implements OnInit{
     this.map.fitBounds(bounds);
   }
 
-  private markerClicked($event: any, index: number) {
+  private hacerClicEnMarcador($event: any, marker: Leaflet.Marker, index: number) {
     this.estacionSeleccionada = this.estaciones[index];
     console.log(this.estacionSeleccionada);
+
+    if (this.marcadorSeleccionado) {
+      this.marcadorSeleccionado.setIcon(this.definirIcono(this.tempMarcadorSeleccionado, false));
+    }
+
+    // Establece el nuevo marcador como el marcador seleccionado.
+    this.marcadorSeleccionado = marker;
+    this.tempMarcadorSeleccionado = this.estacionSeleccionada.temperature;
+
+    // Cambia el icono del marcador al icono personalizado.
+    marker.setIcon(this.definirIcono(this.tempMarcadorSeleccionado, true));
+
+
     // this.ajustarUbicacionVentana($event.containerPoint.x, $event.containerPoint.y);
     this.abrirVentanaInformativa();
     this.ocultarFormularioEnModal();
@@ -147,7 +182,7 @@ export class MapComponent implements OnInit{
         this.estaciones = data;
         console.log(this.estaciones);
         if (this.mapListo){
-          this.initMarkers();
+          this.iniciarMarcadores();
         }
       },
       error: (error) => {

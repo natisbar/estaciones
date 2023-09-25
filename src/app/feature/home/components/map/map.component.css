@@ -199,6 +199,7 @@ hr {
 
 .botones-form button:hover{
   background-color: #e0dcdcf1;
+  cursor: pointer;
 }
 
 
