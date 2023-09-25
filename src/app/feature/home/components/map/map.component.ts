@@ -6,6 +6,7 @@ import { environment } from 'src/environment/environment';
 import { PopupComponent } from '../popup/popup.component';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { DtoStation } from '../../shared/model/dtoStation';
+import { HttpEvent, HttpResponse } from '@angular/common/http';
 
 const GRADO_MENOR: number = 15;
 const GRADO_MAYOR: number = 25;
@@ -33,6 +34,7 @@ export class MapComponent implements OnInit{
   public formAgregar!: FormGroup;
   private marcadorSeleccionado: Leaflet.Marker | null = null;
   private tempMarcadorSeleccionado!: number;
+  private idMarcadorSeleccionado!: number;
   estacionSeleccionada!: Station;
   mostrarVentana: boolean = false;
   mostrarFormulario: boolean = false;
@@ -93,9 +95,9 @@ export class MapComponent implements OnInit{
       else {
         iconUrl = MARCADOR_VERDE_SELECTED;
       }
-      iconSize = [60, 60];
+      iconSize = [55, 55];
     }
-    console.log(iconUrl)
+
     return new Leaflet.Icon({
       iconUrl: iconUrl,
       iconSize: [iconSize[0], iconSize[1]]
@@ -105,7 +107,7 @@ export class MapComponent implements OnInit{
   private iniciarMarcadores() {
     for (let index = 0; index < this.estaciones.length; index++) {
       const data = this.estaciones[index];
-      const marker = this.generarMarcador(data, index);
+      const marker = this.generarMarcador(data, index, false);
 
       marker.addTo(this.map);
 
@@ -115,8 +117,8 @@ export class MapComponent implements OnInit{
     this.ajustarMapaConMarcadores();
   }
 
-  private generarMarcador(data: any, index: number) {
-    const marker = Leaflet.marker({lat: data.latitude, lng: data.longitude}, { icon: this.definirIcono(data.temperature, false) });
+  private generarMarcador(data: any, index: number, iconoSelected: boolean) {
+    const marker = Leaflet.marker({lat: data.latitude, lng: data.longitude}, { icon: this.definirIcono(data.temperature, iconoSelected) });
     marker.on('click', (event) => this.hacerClicEnMarcador(event, marker, index));
     return marker;
   }
@@ -128,29 +130,25 @@ export class MapComponent implements OnInit{
     }
     const latLngs = this.markers.map(marker => marker.getLatLng());
     const bounds = Leaflet.latLngBounds(latLngs);
-    // fitBounds para ajustar el mapa a los límites de los marcadores
-    this.map.fitBounds(bounds);
+    this.map.fitBounds(bounds); //Ajusta el mapa a los límites de los marcadores
   }
 
   private hacerClicEnMarcador($event: any, marker: Leaflet.Marker, index: number) {
-    this.estacionSeleccionada = this.estaciones[index];
-    console.log(this.estacionSeleccionada);
-
-    if (this.marcadorSeleccionado) {
-      this.marcadorSeleccionado.setIcon(this.definirIcono(this.tempMarcadorSeleccionado, false));
-    }
-
-    // Establece el nuevo marcador como el marcador seleccionado.
-    this.marcadorSeleccionado = marker;
-    this.tempMarcadorSeleccionado = this.estacionSeleccionada.temperature;
-
-    // Cambia el icono del marcador al icono personalizado.
-    marker.setIcon(this.definirIcono(this.tempMarcadorSeleccionado, true));
-
-
+    this.cambiarIconoMarcadorSeleccionado(marker, index);
     // this.ajustarUbicacionVentana($event.containerPoint.x, $event.containerPoint.y);
     this.abrirVentanaInformativa();
     this.ocultarFormularioEnModal();
+  }
+
+  private cambiarIconoMarcadorSeleccionado(marker: Leaflet.Marker, index: number){
+    this.estacionSeleccionada = this.estaciones[index];
+    if (this.marcadorSeleccionado) {
+      this.marcadorSeleccionado.setIcon(this.definirIcono(this.tempMarcadorSeleccionado, false));
+    }
+    this.marcadorSeleccionado = marker;
+    this.tempMarcadorSeleccionado = this.estacionSeleccionada.temperature;
+    this.idMarcadorSeleccionado = index;
+    marker.setIcon(this.definirIcono(this.tempMarcadorSeleccionado, true));
   }
 
   private ajustarUbicacionVentana(x: number, y: number){
@@ -176,11 +174,37 @@ export class MapComponent implements OnInit{
     this.mapListo = true;
   }
 
+  private actualizarEnMapa(datosActualizados: DtoStation){
+    this.map.removeLayer(this.marcadorSeleccionado!);
+    const newMarker = this.generarMarcador(datosActualizados, this.idMarcadorSeleccionado, true);
+    newMarker.addTo(this.map);
+    this.markers[this.idMarcadorSeleccionado] = newMarker;
+    this.marcadorSeleccionado = this.markers[this.idMarcadorSeleccionado];
+    this.estacionSeleccionada.latitude = datosActualizados.latitude;
+    this.estacionSeleccionada.longitude = datosActualizados.longitude;
+    this.estacionSeleccionada.temperature = datosActualizados.temperature;
+    this.estacionSeleccionada.ubication = datosActualizados.ubication;
+  }
+
+  private eliminarEnMapa(){
+    this.map.removeLayer(this.marcadorSeleccionado!);
+    this.markers.splice(this.idMarcadorSeleccionado, 1);
+    this.ajustarMapaConMarcadores();
+  }
+
+  private crearEnMapa(datosEstacion: DtoStation){
+    const newMarker = this.generarMarcador(datosEstacion, this.markers.length, false);
+    newMarker.addTo(this.map);
+    this.markers.push(newMarker);
+    this.ajustarMapaConMarcadores();
+    this.ocultarAgregarEnModal();
+    this.formAgregar.reset();
+  }
+
   public listarEstaciones(){
      this.mapService.obtenerEstaciones(environment.endpoint).subscribe({
       next: (data: Station[]) =>{
         this.estaciones = data;
-        console.log(this.estaciones);
         if (this.mapListo){
           this.iniciarMarcadores();
         }
@@ -196,7 +220,9 @@ export class MapComponent implements OnInit{
     if(result){
       this.mapService.eliminarEstacion(environment.endpoint, this.estacionSeleccionada.id).subscribe({
         next: (data) =>{
-          this.reloadPage();
+          this.eliminarEnMapa();
+          this.ocultarFormularioEnModal();
+          this.cerrarVentanaInformativa();
         },
         error: (error) => {
           console.log('Ocurrió un error al borrar la estación:', error);
@@ -211,7 +237,9 @@ export class MapComponent implements OnInit{
       console.log(body);
       this.mapService.actualizarEstacion(environment.endpoint, this.estacionSeleccionada.id, body).subscribe({
         next: (data) =>{
-          this.reloadPage();
+          this.actualizarEnMapa(body);
+          this.ocultarFormularioEnModal();
+          this.ajustarMapaConMarcadores();
         },
         error: (error) => {
           console.log('Ocurrió un error al actualizar la estación:', error);
@@ -227,10 +255,10 @@ export class MapComponent implements OnInit{
     console.log(this.formAgregar.valid);
     if (this.formAgregar.valid){
       let body = this.mapearFormulario(this.formAgregar);
-      console.log(body);
+
       this.mapService.guardarEstacion(environment.endpoint, body).subscribe({
-        next: (data) =>{
-          this.reloadPage();
+        next: (response) =>{
+          this.crearEnMapa(body);
         },
         error: (error) => {
           console.log('Ocurrió un error al actualizar la estación:', error);
