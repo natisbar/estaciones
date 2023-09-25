@@ -21,6 +21,7 @@ const ERROR_ICON: SweetAlertIcon = 'error';
 const INFORMACION_INCOMPLETA: string = 'Por favor diligencie todos los campos.';
 const SOLICITUD_EXITOSA: string = 'Tu solicitud ha sido realizada exitosamente.';
 const SOLICITUD_ERROR: string = 'Se ha presentado inconvenientes con la solicitud. Intentalo nuevamente.';
+const MENSAJE_CONFIRM: string = '¿Estás seguro de eliminar esta estación?';
 
 @Component({
   selector: 'app-map',
@@ -228,7 +229,7 @@ export class MapComponent implements OnInit{
   }
 
   public eliminarEstacion(){
-    const result = window.confirm('¿Estás seguro de eliminar esta estación?');
+    const result = window.confirm(MENSAJE_CONFIRM);
     if(result){
       this.mapService.eliminarEstacion(environment.endpoint, this.estacionSeleccionada.id).subscribe({
         next: (data) =>{
