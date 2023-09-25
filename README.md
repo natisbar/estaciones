@@ -1,27 +1,27 @@
-# Estaciones
+# Arquitectura de la Aplicación Angular
+Esta arquitectura Angular está diseñada para ser modular, escalable y fácil de mantener. Implementa Lazy Loading para mejorar la eficiencia y el rendimiento. A continuación, se presenta una descripción detallada de la arquitectura utilizada:
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 15.2.9.
+## Estructura de Carpetas
+La carpeta principal es "src", la cual contiene todo el código fuente de la aplicación:
 
-## Development server
+#### app: 
+En esta carpeta, se encuentran los archivos centrales de la aplicación.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+  1. core: En esta carpeta, se alojan servicios esenciales que se comparten en toda la aplicación, como el HttpGeneralService.ts, que proporciona funcionalidades de servicio HTTP general para realizar peticiones y gestionar respuestas de manera eficiente. Tambien se organizó un servicio personalizado para el uso de modales con SweetAlert2, que facilita la presentación de mensajes y alertas de manera consistente en toda la aplicación. 
+  2. feature: Esta carpeta agrupa las diferentes características de la aplicación en módulos independientes. Dada las características del frontend desarrollada, solo hay un módulo "Map", el cual es basicamente el home de la web.
+  3. Shared: Pese a que se declara, no se usó dado que solo se tiene un componente, el de "Map" y dentro del módulo de este feature se importa lo que se necesita.
+  
 
-## Code scaffolding
+#### assets: 
+En esta carpeta, se almacenan recursos estáticos como imágenes. Estos archivos son estáticos y no cambian durante la ejecución de la aplicación.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+#### environments:
+Aquí se gestionan las configuraciones específicas para el entorno de trabajo, esto se hace específicamente en el archivo environment.ts en el que se definieron las variables, como el endpoint utilizado para realizar peticiones POST, GET, PUT y DELETE.
 
-## Build
+# funcionamiento de la aplicación:
+Esta aplicación hace uso de la librería "ngx-leaflet" para usar OpenStreetMaps, con esta librería es posible cargar no salemente un mapa, sino definir diferentes marcadores al interior de ese mapa. Los marcadores iniciales son los traidos con una petición GET del endpoint https://62ec1a2d818ab252b6f809d5.mockapi.io/api/Stations/
+La aplicación permite:
+- Seleccionar un marcador existente, editarlo o eliminarlo.
+- Crear un marcador nuevo.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+Nota: Los cambios relacionados con edición, eliminación o agregar un nuevo marcador, reglejan de manera inmediata dichos cambios en el mapa.  

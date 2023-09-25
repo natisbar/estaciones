@@ -7,9 +7,16 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { DtoStation } from '../../shared/model/dtoStation';
 import { ModalNotificaciones } from 'src/app/core/services/modal.service';
 import { SweetAlertIcon } from 'sweetalert2';
+import { numeroValidatorConRango, regularCharacterValidator } from 'src/app/shared/form.validator';
 
 const GRADO_MENOR: number = 15;
 const GRADO_MAYOR: number = 25;
+const MIN_TEMPERATURA: number = -100;
+const MAX_TEMPERATURA: number = 100;
+const MIN_LONGITUD: number = -180;
+const MAX_LONGITUD: number = 180;
+const MIN_LATITUD: number = -90;
+const MAX_LATITUD: number = 90;
 const MARCADOR_AZUL: string = 'assets/image/marker_blue.png';
 const MARCADOR_ROJO: string = 'assets/image/marker_red.png';
 const MARCADOR_VERDE: string = 'assets/image/marker_green.png';
@@ -18,7 +25,7 @@ const MARCADOR_ROJO_SELECTED: string = 'assets/image/marker_red_selected.png';
 const MARCADOR_VERDE_SELECTED: string = 'assets/image/marker_green_selected.png';
 const SATISFACTORIO_ICON: SweetAlertIcon = 'success';
 const ERROR_ICON: SweetAlertIcon = 'error';
-const INFORMACION_INCOMPLETA: string = 'Por favor diligencie todos los campos.';
+const INFORMACION_INCORRECTA: string = 'Hay campos incorrectos. Por favor ajustelos:';
 const SOLICITUD_EXITOSA: string = 'Tu solicitud ha sido realizada exitosamente.';
 const SOLICITUD_ERROR: string = 'Se ha presentado inconvenientes con la solicitud. Intentalo nuevamente.';
 const MENSAJE_CONFIRM: string = '¿Estás seguro de eliminar esta estación?';
@@ -68,11 +75,29 @@ export class MapComponent implements OnInit{
 
   private construirFormulario(){
     return new FormGroup({
-      nombre: new FormControl("", Validators.required),
-      temp: new FormControl("", [Validators.required]),
-      latitud: new FormControl("", [Validators.required]),
-      longitud: new FormControl("", [Validators.required]),
+      nombre: new FormControl("", [Validators.required, regularCharacterValidator()]),
+      temp: new FormControl("", [Validators.required, numeroValidatorConRango(MIN_TEMPERATURA, MAX_TEMPERATURA)]),
+      latitud: new FormControl("", [Validators.required, numeroValidatorConRango(MIN_LATITUD, MAX_LATITUD)]),
+      longitud: new FormControl("", [Validators.required, numeroValidatorConRango(MIN_LONGITUD, MAX_LONGITUD)]),
     });
+  }
+
+  private obtenerNombreField(formulario: FormGroup) { return formulario.get('nombre'); }
+  private obtenerTemperaturaField(formulario: FormGroup) { return formulario.get('temp'); }
+  private obtenerLatitudField(formulario: FormGroup) { return formulario.get('latitud'); }
+  private obtenerLongitudField(formulario: FormGroup) { return formulario.get('longitud'); }
+
+  private obtenerErrores(form: FormGroup){
+    return `${(this.obtenerNombreField(form)!.errors?.['required']) ? " -nombre es requerido" : ""}
+    ${(this.obtenerTemperaturaField(form)!.errors?.['required']) ? " -temperatura es requerida" : ""}
+    ${(this.obtenerLatitudField(form)!.errors?.['required']) ? " -latitud es requerida" : ""}
+    ${(this.obtenerLongitudField(form)!.errors?.['required']) ? "-longitud es requerida" : ""}
+    ${(this.obtenerTemperaturaField(form)!.errors?.['numeroPattern']) ? " -temperatura debe ser un numero" : ""}
+    ${(this.obtenerLatitudField(form)!.errors?.['numeroPattern']) ? " -latitud debe ser un numero" : ""}
+    ${(this.obtenerLongitudField(form)!.errors?.['numeroPattern']) ? " -longitud debe ser un numero" : ""}
+    ${(this.obtenerTemperaturaField(form)!.errors?.['rangoInvalido']) ? " -latitud fuera de rango (" + MIN_TEMPERATURA + " a " + MAX_TEMPERATURA + ")" : ""}
+    ${(this.obtenerLatitudField(form)!.errors?.['rangoInvalido']) ? " -latitud fuera de rango (" + MIN_LATITUD + " a " + MAX_LATITUD + ")" : ""}
+    ${(this.obtenerLongitudField(form)!.errors?.['rangoInvalido']) ? " -latitud fuera de rango (" + MIN_LONGITUD + " a " + MAX_LONGITUD + ")" : ""}`;
   }
 
   private definirIcono(grados: number, selected: boolean): Leaflet.Icon{
@@ -265,7 +290,7 @@ export class MapComponent implements OnInit{
       });
     }
     else{
-      this.modalNotificaciones.modalBasico(ERROR_ICON, INFORMACION_INCOMPLETA);
+      this.modalNotificaciones.modalBasico(ERROR_ICON, INFORMACION_INCORRECTA + this.obtenerErrores(this.formActualizar));
     }
   }
 
@@ -289,7 +314,7 @@ export class MapComponent implements OnInit{
       });
     }
     else{
-      this.modalNotificaciones.modalBasico(ERROR_ICON, INFORMACION_INCOMPLETA);
+      this.modalNotificaciones.modalBasico(ERROR_ICON, INFORMACION_INCORRECTA + this.obtenerErrores(this.formAgregar));
     }
   }
 
