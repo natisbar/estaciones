@@ -149,7 +149,6 @@ export class MapComponent implements OnInit{
     this.cambiarIconoMarcadorSeleccionado(marker, index);
     // this.ajustarUbicacionVentana($event.containerPoint.x, $event.containerPoint.y);
     this.abrirVentanaInformativa();
-    this.ocultarFormularioEnModal();
   }
 
   private cambiarIconoMarcadorSeleccionado(marker: Leaflet.Marker, index: number){
@@ -207,16 +206,7 @@ export class MapComponent implements OnInit{
     newMarker.addTo(this.map);
     this.markers.push(newMarker);
     this.ajustarMapaConMarcadores();
-    this.ocultarAgregarEnModal();
-    this.formAgregar.reset();
     this.listarEstaciones(false);
-  }
-
-  private borrarEnMapa(){
-    this.listarEstaciones(true);
-    this.ocultarFormularioEnModal();
-    this.cerrarVentanaInformativa();
-    this.marcadorSeleccionado = null;
   }
 
   public onMapReady($event: Leaflet.Map) {
@@ -244,9 +234,11 @@ export class MapComponent implements OnInit{
     if(result){
       this.mapService.eliminarEstacion(environment.endpoint, this.estacionSeleccionada.id).subscribe({
         next: (data) =>{
-          this.borrarEnMapa();
+          this.listarEstaciones(true);
+          this.cerrarVentanaInformativa();
+          this.ocultarAgregarEnModal();
+          this.marcadorSeleccionado = null;;
           this.modalNotificaciones.modalBasico(SATISFACTORIO_ICON, SOLICITUD_EXITOSA);
-
         },
         error: (error) => {
           this.modalNotificaciones.modalBasico(ERROR_ICON, SOLICITUD_ERROR);
@@ -285,10 +277,13 @@ export class MapComponent implements OnInit{
       this.mapService.guardarEstacion(environment.endpoint, body).subscribe({
         next: (response) =>{
           this.crearEnMapa(body);
+          this.cerrarVentanaInformativa();
+          this.ocultarAgregarEnModal();
+          this.formAgregar.reset();
           this.modalNotificaciones.modalBasico(SATISFACTORIO_ICON, SOLICITUD_EXITOSA);
         },
         error: (error) => {
-          // this.modalNotificaciones.modalBasico(ERROR_ICON, SOLICITUD_ERROR);
+          this.modalNotificaciones.modalBasico(ERROR_ICON, SOLICITUD_ERROR);
           console.log(error);
         }
       });
@@ -306,12 +301,12 @@ export class MapComponent implements OnInit{
 
   public abrirVentanaInformativa(){
     this.mostrarVentana = true;
-    this.forzarDeteccionCambios();
+    this.ocultarFormularioEnModal()
   }
 
   public cerrarVentanaInformativa(){
     this.mostrarVentana = false;
-    this.forzarDeteccionCambios();
+    this.ocultarFormularioEnModal();
   }
 
   public mostrarFormularioEnModal(){
