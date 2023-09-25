@@ -154,7 +154,7 @@ export class MapComponent implements OnInit{
 
   private cambiarIconoMarcadorSeleccionado(marker: Leaflet.Marker, index: number){
     this.estacionSeleccionada = this.estaciones[index];
-    if (this.marcadorSeleccionado) {
+    if (this.marcadorSeleccionado && this.marcadorSeleccionado != null) {
       this.marcadorSeleccionado.setIcon(this.definirIcono(this.tempMarcadorSeleccionado, false));
     }
     this.marcadorSeleccionado = marker;
@@ -189,6 +189,7 @@ export class MapComponent implements OnInit{
   }
 
   private actualizarEnMapa(datosActualizados: DtoStation){
+    this.listarEstaciones(false);
     this.map.removeLayer(this.marcadorSeleccionado!);
     const newMarker = this.generarMarcador(datosActualizados, this.idMarcadorSeleccionado, true);
     newMarker.addTo(this.map);
@@ -198,14 +199,7 @@ export class MapComponent implements OnInit{
     this.estacionSeleccionada.longitude = datosActualizados.longitude;
     this.estacionSeleccionada.temperature = datosActualizados.temperature;
     this.estacionSeleccionada.ubication = datosActualizados.ubication;
-    this.listarEstaciones(false);
-  }
-
-  private eliminarEnMapa(){
-    this.map.removeLayer(this.marcadorSeleccionado!);
-    this.markers.splice(this.idMarcadorSeleccionado, 1);
-    this.ajustarMapaConMarcadores();
-    this.listarEstaciones(true);
+    this.tempMarcadorSeleccionado = datosActualizados.temperature;
   }
 
   private crearEnMapa(datosEstacion: DtoStation){
@@ -216,6 +210,13 @@ export class MapComponent implements OnInit{
     this.ocultarAgregarEnModal();
     this.formAgregar.reset();
     this.listarEstaciones(false);
+  }
+
+  private borrarEnMapa(){
+    this.listarEstaciones(true);
+    this.ocultarFormularioEnModal();
+    this.cerrarVentanaInformativa();
+    this.marcadorSeleccionado = null;
   }
 
   public onMapReady($event: Leaflet.Map) {
@@ -243,10 +244,9 @@ export class MapComponent implements OnInit{
     if(result){
       this.mapService.eliminarEstacion(environment.endpoint, this.estacionSeleccionada.id).subscribe({
         next: (data) =>{
-          this.eliminarEnMapa();
-          this.ocultarFormularioEnModal();
-          this.cerrarVentanaInformativa();
+          this.borrarEnMapa();
           this.modalNotificaciones.modalBasico(SATISFACTORIO_ICON, SOLICITUD_EXITOSA);
+
         },
         error: (error) => {
           this.modalNotificaciones.modalBasico(ERROR_ICON, SOLICITUD_ERROR);
@@ -288,7 +288,7 @@ export class MapComponent implements OnInit{
           this.modalNotificaciones.modalBasico(SATISFACTORIO_ICON, SOLICITUD_EXITOSA);
         },
         error: (error) => {
-          this.modalNotificaciones.modalBasico(ERROR_ICON, SOLICITUD_ERROR);
+          // this.modalNotificaciones.modalBasico(ERROR_ICON, SOLICITUD_ERROR);
           console.log(error);
         }
       });
