@@ -61,7 +61,7 @@ export class MapComponent implements OnInit{
               private modalNotificaciones: ModalNotificaciones){}
 
   ngOnInit(): void {
-    this.listarEstaciones();
+    this.listarEstaciones(true);
     this.formActualizar = this.construirFormulario();
     this.formAgregar = this.construirFormulario();
   }
@@ -191,12 +191,14 @@ export class MapComponent implements OnInit{
     this.estacionSeleccionada.longitude = datosActualizados.longitude;
     this.estacionSeleccionada.temperature = datosActualizados.temperature;
     this.estacionSeleccionada.ubication = datosActualizados.ubication;
+    this.listarEstaciones(false);
   }
 
   private eliminarEnMapa(){
     this.map.removeLayer(this.marcadorSeleccionado!);
     this.markers.splice(this.idMarcadorSeleccionado, 1);
     this.ajustarMapaConMarcadores();
+    this.listarEstaciones(false);
   }
 
   private crearEnMapa(datosEstacion: DtoStation){
@@ -206,6 +208,7 @@ export class MapComponent implements OnInit{
     this.ajustarMapaConMarcadores();
     this.ocultarAgregarEnModal();
     this.formAgregar.reset();
+    this.listarEstaciones(false);
   }
 
   public onMapReady($event: Leaflet.Map) {
@@ -213,11 +216,11 @@ export class MapComponent implements OnInit{
     this.mapListo = true;
   }
 
-  public listarEstaciones(){
+  public listarEstaciones(conInicioDeMarcadores: boolean){
      this.mapService.obtenerEstaciones(environment.endpoint).subscribe({
       next: (data: Station[]) =>{
         this.estaciones = data;
-        if (this.mapListo){
+        if (this.mapListo && conInicioDeMarcadores){
           this.iniciarMarcadores();
         }
       },
